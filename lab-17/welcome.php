@@ -20,6 +20,7 @@ if (!isset($_SESSION['username'])) {
 </head>
 <body>
 <h2>Welcome, <?php echo $_SESSION['username']; ?>!</h2>
+<a href="books.php">Go to Books</a> | 
 <a href="logout.php">Logout</a>
 </body>
 </html>
