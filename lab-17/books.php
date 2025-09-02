@@ -8,36 +8,62 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-// CREATE
+// ADD CATEGORY
+if (isset($_POST['add_category'])) {
+    $cat_name = $_POST['cat_name'];
+    if (!empty($cat_name)) {
+        $sql = "INSERT INTO categories (name) VALUES ('$cat_name')";
+        mysqli_query($conn, $sql);
+    }
+}
+
+// CREATE BOOK
 if (isset($_POST['add'])) {
     $title = $_POST['title'];
     $author = $_POST['author'];
     $year = $_POST['year'];
+    $category_id = $_POST['category_id'];
 
-    $sql = "INSERT INTO books (title, author, year) VALUES ('$title', '$author', '$year')";
+    $sql = "INSERT INTO books (title, author, year, category_id) 
+            VALUES ('$title', '$author', '$year', '$category_id')";
     mysqli_query($conn, $sql);
 }
 
-// DELETE
+// DELETE BOOK
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
     $sql = "DELETE FROM books WHERE id=$id";
     mysqli_query($conn, $sql);
 }
 
-// UPDATE
+// UPDATE BOOK
 if (isset($_POST['update'])) {
     $id = $_POST['id'];
     $title = $_POST['title'];
     $author = $_POST['author'];
     $year = $_POST['year'];
+    $category_id = $_POST['category_id'];
 
-    $sql = "UPDATE books SET title='$title', author='$author', year='$year' WHERE id=$id";
+    $sql = "UPDATE books 
+            SET title='$title', author='$author', year='$year', category_id='$category_id' 
+            WHERE id=$id";
     mysqli_query($conn, $sql);
 }
 
-// READ
-$result = mysqli_query($conn, "SELECT * FROM books");
+// READ Books with Category Join
+$result = mysqli_query($conn, 
+    "SELECT books.*, categories.name AS category_name 
+     FROM books 
+     LEFT JOIN categories ON books.category_id = categories.id"
+);
+
+// Fetch all categories once
+//sql = "SELECT * FROM categories"
+$categories = mysqli_query($conn, "SELECT * FROM categories");
+$categoryList = [];
+while ($cat = mysqli_fetch_assoc($categories)) {
+    $categoryList[] = $cat;
+}
 ?>
 
 <!DOCTYPE html>
@@ -49,16 +75,33 @@ $result = mysqli_query($conn, "SELECT * FROM books");
 <h2>Welcome, <?php echo $_SESSION['username']; ?> | <a href="logout.php">Logout</a></h2>
 <hr>
 
+<!-- Add Category Form -->
+<h3>Add Category</h3>
+<form method="POST">
+    Category Name: <input type="text" name="cat_name" required>
+    <input type="submit" name="add_category" value="Add Category">
+</form>
+
+<hr>
+
 <!-- Add Book Form -->
 <h3>Add Book</h3>
 <form method="POST">
     Title: <input type="text" name="title" required><br><br>
     Author: <input type="text" name="author" required><br><br>
     Year: <input type="number" name="year" required><br><br>
+    Category: 
+    <select name="category_id" required>
+        <option value="">Select Category</option>
+        <?php foreach ($categoryList as $cat) { ?>
+            <option value="<?php echo $cat['id']; ?>"><?php echo $cat['name']; ?></option>
+        <?php } ?>
+    </select><br><br>
     <input type="submit" name="add" value="Add Book">
 </form>
 
 <hr>
+
 <h3>Book List</h3>
 <table border="1" cellpadding="5">
 <tr>
@@ -66,6 +109,7 @@ $result = mysqli_query($conn, "SELECT * FROM books");
     <th>Title</th>
     <th>Author</th>
     <th>Year</th>
+    <th>Category</th>
     <th>Actions</th>
 </tr>
 
@@ -75,6 +119,7 @@ $result = mysqli_query($conn, "SELECT * FROM books");
     <td><?php echo $row['title']; ?></td>
     <td><?php echo $row['author']; ?></td>
     <td><?php echo $row['year']; ?></td>
+    <td><?php echo $row['category_name']; ?></td>
     <td>
         <!-- Edit Form -->
         <form method="POST" style="display:inline-block;">
@@ -82,6 +127,17 @@ $result = mysqli_query($conn, "SELECT * FROM books");
             <input type="text" name="title" value="<?php echo $row['title']; ?>">
             <input type="text" name="author" value="<?php echo $row['author']; ?>">
             <input type="number" name="year" value="<?php echo $row['year']; ?>">
+
+            <select name="category_id">
+                <?php foreach ($categoryList as $cat) { 
+                    $selected = ($cat['id'] == $row['category_id']) ? "selected" : "";
+                ?>
+                    <option value="<?php echo $cat['id']; ?>" <?php echo $selected; ?>>
+                        <?php echo $cat['name']; ?>
+                    </option>
+                <?php } ?>
+            </select>
+
             <input type="submit" name="update" value="Update">
         </form>
         <!-- Delete Link -->
