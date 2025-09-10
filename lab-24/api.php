@@ -6,7 +6,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 switch($method) {
-    // GET - Read
+    // GET - Read the data 
     case 'GET':
         if($id > 0){
             $result = $mysqli->query("SELECT * FROM students WHERE id = $id");
@@ -18,7 +18,7 @@ switch($method) {
                 $data[] = $row;
             }
         }
-        echo json_encode($data);
+        echo json_encode($data);    
         break;
 
     // POST - Create
@@ -57,3 +57,5 @@ switch($method) {
 
 $mysqli->close();
 ?>
+
+
